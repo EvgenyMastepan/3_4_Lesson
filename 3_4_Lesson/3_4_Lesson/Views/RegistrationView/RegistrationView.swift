@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct RegistrationView: View {
-    @StateObject private var viewModel = RegistrationViewModel()
-    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var viewModel: AuthViewModel
+
+//    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         GeometryReader { geometry in
@@ -24,7 +25,7 @@ struct RegistrationView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Group {
-                        TextField("email", text: $viewModel.login)
+                        TextField("Email", text: $viewModel.email)
                             .textFieldStyle(RoundedTextFieldStyle())
                             .padding(.top, 140)
                             .autocapitalization(.none)
@@ -32,40 +33,56 @@ struct RegistrationView: View {
                         
                         PasswordFieldView(
                             password: $viewModel.password,
-                            isVisible: $viewModel.isPasswordVisible)
+                            isVisible: $viewModel.isPasswordVisible
+                        )
                         .padding(.top, 20)
                         
-                        TextField("Имя", text: $viewModel.userName)
+                        TextField("Имя", text: $viewModel.firstName)
                             .textFieldStyle(RoundedTextFieldStyle())
                             .padding(.top, 20)
                         
-                        TextField("Фамилия", text: $viewModel.userLastName)
+                        TextField("Фамилия", text: $viewModel.lastName)
                             .textFieldStyle(RoundedTextFieldStyle())
                             .padding(.top, 20)
                     }
-                        
-                    Button(action: {
-                        //Правда или действие
-                        viewModel.register()
-                    }) {
-                        Text("Регистрация")
+                    
+                    if !viewModel.errorMessage.isEmpty {
+                        Text(viewModel.errorMessage)
+                            .foregroundColor(.red)
+                            .padding(.top, 8)
+                    }
+                    
+                    Button(action: viewModel.register) {
+                        Text("Зарегистрироваться")
                     }
                     .buttonStyle(RoundedButtonStyle())
                     .padding(.top, 48)
-                    .disabled(!viewModel.validateFields())
-                    .opacity(viewModel.validateFields() ? 1 : 0.7)
                     
                     Spacer()
                 }
                 .padding(.horizontal, 30)
             }
         }
-        .navigationDestination(isPresented: $viewModel.isRegistrationSuccessful) {
-            ContentView()
-        }
     }
 }
 
-#Preview {
-    RegistrationView()
+#Preview("Обычное состояние") {
+    RegistrationView(viewModel: AuthViewModel())
+}
+
+#Preview("С заполненными полями") {
+    let vm = AuthViewModel()
+    vm.email = "user@example.com"
+    vm.password = "Qwerty123"
+    vm.firstName = "Мария"
+    vm.lastName = "Петрова"
+    return RegistrationView(viewModel: vm)
+}
+
+#Preview("С ошибкой") {
+    let vm = AuthViewModel()
+    vm.email = "неправильный email"
+    vm.password = "123"
+    vm.errorMessage = "Некорректный email или пароль"
+    return RegistrationView(viewModel: vm)
 }

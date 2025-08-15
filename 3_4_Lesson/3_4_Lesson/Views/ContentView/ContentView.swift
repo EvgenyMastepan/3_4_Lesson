@@ -8,73 +8,73 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var login = ""
-    @State private var password = ""
-    @State private var isPasswordVisible = false
+    @StateObject private var viewModel = AuthViewModel()
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.black.ignoresSafeArea()
-                VStack {
-                    Text("Авторизация")
-                        .font(.system(size: 30, weight: .black))
-                        .foregroundStyle(.white)
-                        .padding(.top, geometry.size.height / 6)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    TextField("email", text: $login)
-                        .textFieldStyle(RoundedTextFieldStyle())
-                        .padding(.top, 140)
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    Color.black.ignoresSafeArea()
                     
-                    ZStack(alignment: .trailing) {
-                        if isPasswordVisible {
-                            TextField("Пароль", text: $password)
-                                .frame(height: 44)
-                        } else {
-                            SecureField("Пароль", text: $password)
-                                .frame(height: 44)
+                    VStack {
+                        Text("Авторизация")
+                            .font(.system(size: 30, weight: .black))
+                            .foregroundStyle(.white)
+                            .padding(.top, geometry.size.height / 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Group {
+                            TextField("Email", text: $viewModel.email)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                                .padding(.top, 140)
+                                .autocapitalization(.none)
+                                .keyboardType(.emailAddress)
+                            
+                            PasswordFieldView(
+                                password: $viewModel.password,
+                                isVisible: $viewModel.isPasswordVisible
+                            )
+                            .padding(.top, 20)
                         }
+                        
+                        Button(action: viewModel.login) {
+                            Text("Войти")
+                        }
+                        .buttonStyle(RoundedButtonStyle())
+                        .padding(.top, 48)
                         
                         Button(action: {
-                            withAnimation {
-                                isPasswordVisible.toggle()
-                            }
+                            viewModel.showRegistration = true
                         }) {
-                            Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
-                                .foregroundStyle(isPasswordVisible ? .blue : .gray)
-                                .padding(.trailing, 12)
+                            Text("Регистрация")
+                                .underline()
+                                .frame(maxWidth: .infinity)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 16, weight: .regular))
+                                .padding(.top, 40)
+                        }
+                        
+                        Spacer()
+                        // Обработка ошибок.
+                        if !viewModel.errorMessage.isEmpty {
+                            Text(viewModel.errorMessage)
+                                .foregroundColor(.red)
+                                .padding(.top, 8)
                         }
                     }
-                    .textFieldStyle(RoundedTextFieldStyle())
-                    .padding(.top, 20)
-                    
-                    Button(action: {
-                        //Правда или действие
-                    }) {
-                        Text("Войти")
-                    }
-                    .buttonStyle(RoundedButtonStyle())
-                    .padding(.top, 48)
-                    
-                    Button(action: {
-                        //Действие
-                    }) {
-                        Text("Регистрация")
-                            .underline()
-                            .frame(maxWidth: .infinity)
-                            .foregroundStyle(.white)
-                            .font(.system(size: 16, weight: .regular))
-                            .padding(.top, 40)
-                        
-                    }
-                    
-                    Spacer()
+                    .padding(.horizontal, 30)
                 }
-                .padding(.horizontal, 30)
+            }
+            .navigationDestination(isPresented: $viewModel.isAuthenticated) {
+                MainView(viewModel: viewModel)
+            }
+            .navigationDestination(isPresented: $viewModel.showRegistration) {
+                RegistrationView(viewModel: viewModel)
             }
         }
     }
 }
+
 
 #Preview {
     ContentView()
